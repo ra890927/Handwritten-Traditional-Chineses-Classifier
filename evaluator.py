@@ -5,8 +5,8 @@ from tqdm import tqdm
 from pathlib import Path
 from typing import Union
 
-from .model import ResNet
-from .dataset import HCCRDataset
+from model import ResNet
+from dataset import HCCRDataset
 
 
 class Evaluator:
@@ -23,7 +23,7 @@ class Evaluator:
         self.model = model
         self.device = device
         self.alphabet = alphabet
-        self.dataloader = DataLoader(dataset, batch_size=bs)
+        self.dataloader = DataLoader(dataset, batch_size=bs, num_workers=4)
 
     @no_grad()
     def __call__(self, epoch: int) -> float:
@@ -32,15 +32,17 @@ class Evaluator:
             acc, total_id = 0, 1
             for data, label in tqdm(self.dataloader):
                 inputs = data.to(self.device)
-                labels = label.to(self.device).long()
+                labels = label.to(self.device).float()
 
                 pred = self.model(inputs)
                 pred_argmax = torch.argmax(pred, dim=1)
                 label_argmax = torch.argmax(labels, dim=1)
 
                 for pid, lid in zip(pred_argmax, label_argmax):
+                    pid, lid = pid.item(), lid.item()
                     acc += pid == lid
-                    f.write(f'{total_id} | {self.alphabet[pid]} | {self.alphabet[lid]}\n')
+                    check = self.alphabet[pid] == self.alphabet[lid]
+                    f.write(f'{total_id} | {self.alphabet[pid]} | {self.alphabet[lid]} | {check}\n')
                     total_id += 1
 
         return acc / len(self.dataloader.dataset) * 100
