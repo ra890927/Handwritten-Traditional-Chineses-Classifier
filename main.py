@@ -1,3 +1,4 @@
+import json
 import torch
 from pathlib import Path
 from shutil import rmtree
@@ -28,12 +29,27 @@ def parse_argument() -> Namespace:
     parser.add_argument('--epochs', type=int, default=40)
     parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument('--bs', type=int, default=128)
+    parser.add_argument('--resume', type=str)
+    parser.add_argument('--save', action='store_true', default=True)
     parser.add_argument('--load', type=str)
     return parser.parse_args()
 
+def save_args(args: Namespace) -> None:
+    with open(Path('./history') / args.expr / 'args.json', 'w+', encoding='utf-8') as f:
+        json.dump(vars(args), f, indent=4)
+
+def laod_args(args: Namespace) -> Namespace:
+    with open(args.load, 'w+', encoding='utf-8') as f:
+        loaded_args = json.load(f)
+    for key, val in loaded_args.items():
+        setattr(args, key, val)
+    return args
 
 def main() -> None:
     args = parse_argument()
+
+    if args.load:
+        args = laod_args(args)
 
     with open(args.alphabet, 'r', encoding='utf-8') as f:
         alphabet = f.read().strip()
@@ -50,14 +66,17 @@ def main() -> None:
     expr = Path('./history') / args.expr
     remove_and_create_dir(expr)
 
+    if args.save:
+        save_args(args)
+
     eval_dataset = HCCRDataset('eval', args.eval, alphabet)
     train_dataset = HCCRDataset('train', args.train, alphabet)
 
     evaluator = Evaluator(expr, alphabet, model, eval_dataset, device, args.bs)
     trainer = Trainer(expr, model, evaluator, train_dataset, device, args.lr, args.bs)
 
-    if args.load:
-        model.load_state_dict(torch.load(args.load))
+    if args.resume:
+        model.load_state_dict(torch.load(args.resume))
 
     if args.test_only:
         acc = evaluator(0)
