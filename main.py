@@ -21,9 +21,9 @@ def parse_argument() -> Namespace:
     parser = ArgumentParser()
     parser.add_argument('--expr', type=str)
     parser.add_argument('--model', type=str)
-    parser.add_argument('--alphabet', type=str, required=True)
-    parser.add_argument('--eval', type=str, required=True)
-    parser.add_argument('--train', type=str, required=True)
+    parser.add_argument('--alphabet', type=str)
+    parser.add_argument('--eval', type=str)
+    parser.add_argument('--train', type=str)
     parser.add_argument('--device', type=str, default='cuda')
     parser.add_argument('--test_only', action='store_true', default=False)
     parser.add_argument('--epochs', type=int, default=40)
@@ -39,7 +39,7 @@ def save_args(args: Namespace) -> None:
         json.dump(vars(args), f, indent=4)
 
 def laod_args(args: Namespace) -> Namespace:
-    with open(args.load, 'w+', encoding='utf-8') as f:
+    with open(args.load, 'r', encoding='utf-8') as f:
         loaded_args = json.load(f)
     for key, val in loaded_args.items():
         setattr(args, key, val)
