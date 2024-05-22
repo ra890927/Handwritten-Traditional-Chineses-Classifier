@@ -25,6 +25,11 @@ class Evaluator:
         self.alphabet = alphabet
         self.dataloader = DataLoader(dataset, batch_size=bs, num_workers=4)
 
+        self.all_records = open(self.expr / 'records.txt', 'w+', encoding='utf-8')
+
+    def __del__(self) -> None:
+        self.all_records.close()
+
     @no_grad()
     def __call__(self, epoch: int) -> float:
         with open(self.expr / f'result_{epoch:02d}.txt', 'w+', encoding='utf-8') as f:
@@ -44,5 +49,7 @@ class Evaluator:
                     check = self.alphabet[pid] == self.alphabet[lid]
                     f.write(f'{total_id} | {self.alphabet[pid]} | {self.alphabet[lid]} | {check}\n')
                     total_id += 1
+
+        self.all_records.write(f'{epoch:03d}: {acc / len(self.dataloader.dataset) * 100:.4f}')
 
         return acc / len(self.dataloader.dataset) * 100
