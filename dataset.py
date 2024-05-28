@@ -20,7 +20,7 @@ class HCCRDataset(Dataset):
         self.lb.fit([i for i in range(len(self.alphabet))])
 
         self.transforms = transforms.Compose([
-            transforms.RandomRotation(degrees=30),
+            transforms.RandomRotation(degrees=20),
             transforms.Resize((256, 256)),
             transforms.RandomCrop((224, 224))
         ])
