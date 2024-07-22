@@ -2,6 +2,7 @@ import json
 import torch
 from pathlib import Path
 from shutil import rmtree
+from torch.utils.data import ConcatDataset
 from argparse import ArgumentParser, Namespace
 
 from trainer import Trainer
@@ -11,7 +12,7 @@ from model import ResNet18, ResNet50, ResNet152
 
 
 def remove_and_create_dir(path: Path) -> None:
-    path.parent.mkdir(exist_ok=True)
+    path.parent.mkdir(exist_ok=True, parents=True)
     if path.is_dir():
         rmtree(path)
     path.mkdir()
@@ -22,13 +23,13 @@ def parse_argument() -> Namespace:
     parser.add_argument('--expr', type=str)
     parser.add_argument('--model', type=str)
     parser.add_argument('--alphabet', type=str)
-    parser.add_argument('--eval', type=str)
-    parser.add_argument('--train', type=str)
+    parser.add_argument('--eval', action='append', type=str)
+    parser.add_argument('--train', action='append', type=str)
     parser.add_argument('--device', type=str, default='cuda')
     parser.add_argument('--test_only', action='store_true', default=False)
     parser.add_argument('--epochs', type=int, default=40)
     parser.add_argument('--lr', type=float, default=0.001)
-    parser.add_argument('--bs', type=int, default=128)
+    parser.add_argument('--bs', type=int, default=80)
     parser.add_argument('--resume', type=str)
     parser.add_argument('--save', action='store_true', default=True)
     parser.add_argument('--load', type=str)
@@ -68,9 +69,9 @@ def main() -> None:
 
     if args.save:
         save_args(args)
-
-    eval_dataset = HCCRDataset('eval', args.eval, alphabet)
-    train_dataset = HCCRDataset('train', args.train, alphabet)
+    
+    eval_dataset = ConcatDataset([HCCRDataset('eval', eval_path, alphabet) for eval_path in args.eval])
+    train_dataset = ConcatDataset([HCCRDataset('train', train_path, alphabet) for train_path in args.train])
 
     evaluator = Evaluator(expr, alphabet, model, eval_dataset, device, args.bs)
     trainer = Trainer(expr, model, evaluator, train_dataset, device, args.lr, args.bs)
