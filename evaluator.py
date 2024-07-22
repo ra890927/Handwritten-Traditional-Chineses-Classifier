@@ -50,6 +50,6 @@ class Evaluator:
                     f.write(f'{total_id} | {self.alphabet[pid]} | {self.alphabet[lid]} | {check}\n')
                     total_id += 1
 
-        self.all_records.write(f'{epoch:03d}: {acc / len(self.dataloader.dataset) * 100:.4f}')
+        self.all_records.write(f'{epoch:03d}: {acc / len(self.dataloader.dataset) * 100:.4f}\n')
 
         return acc / len(self.dataloader.dataset) * 100
